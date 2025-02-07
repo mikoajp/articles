@@ -10,18 +10,18 @@ class ArticleController extends Controller
 {
     public function index()
     {
-        $articles = Article::all();
+        $articles = Article::orderBy('created_at', 'desc')->get();
         return response()->json($articles);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string'
         ]);
 
-        $article = Article::create($request->all());
+        $article = Article::create($validated);
         return response()->json($article, 201);
     }
 
@@ -33,13 +33,14 @@ class ArticleController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
+        $article = Article::findOrFail($id);
+
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string'
         ]);
 
-        $article = Article::findOrFail($id);
-        $article->update($request->all());
+        $article->update($validated);
         return response()->json($article);
     }
 
