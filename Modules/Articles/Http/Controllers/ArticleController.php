@@ -3,30 +3,25 @@
 namespace Modules\Articles\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Routing\Controller;
 use Modules\Articles\Entities\Article;
+use Modules\Articles\Services\ArticleCacheService;
 
 class ArticleController extends Controller
 {
-    private const CACHE_TTL = 60;
-    private const CACHE_KEY_PREFIX_INDEX = 'articles:index:';
-    private const CACHE_KEY_PREFIX_SINGLE = 'article:';
+    private $cacheService;
+
+    public function __construct(ArticleCacheService $cacheService)
+    {
+        $this->cacheService = $cacheService;
+    }
 
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 20);
         $page = $request->input('page', 1);
 
-        $articles = Cache::remember(
-            self::CACHE_KEY_PREFIX_INDEX . "page_{$page}_per_{$perPage}",
-            self::CACHE_TTL,
-            function () use ($perPage) {
-                return Article::orderByDesc('created_at')
-                    ->select(['id', 'title', 'content', 'created_at', 'updated_at'])
-                    ->paginate($perPage);
-            }
-        );
+        $articles = $this->cacheService->getArticles($perPage, $page);
 
         return response()->json([
             'data' => $articles->items(),
@@ -47,28 +42,14 @@ class ArticleController extends Controller
         ]);
 
         $article = Article::create($validated);
-
-        $this->clearCache($article->id);
+        $this->cacheService->clearCache();
 
         return response()->json($article, 201);
     }
 
     public function show($id)
     {
-        $article = Cache::remember(
-            self::CACHE_KEY_PREFIX_SINGLE . $id,
-            self::CACHE_TTL,
-            function () use ($id) {
-                return Article::select([
-                    'id',
-                    'title',
-                    'content',
-                    'created_at',
-                    'updated_at'
-                ])->findOrFail($id);
-            }
-        );
-
+        $article = $this->cacheService->getArticle($id);
         return response()->json($article);
     }
 
@@ -83,12 +64,8 @@ class ArticleController extends Controller
 
         $article->update($validated);
 
-        $this->clearCache($id);
-        Cache::put(
-            self::CACHE_KEY_PREFIX_SINGLE . $id,
-            $article->fresh(),
-            self::CACHE_TTL
-        );
+        $this->cacheService->clearCache($id);
+        $this->cacheService->putArticle($article->fresh());
 
         return response()->json($article);
     }
@@ -98,16 +75,8 @@ class ArticleController extends Controller
         $article = Article::findOrFail($id);
         $article->delete();
 
-        $this->clearCache($id);
+        $this->cacheService->clearCache($id);
 
         return response()->json(null, 204);
-    }
-
-    private function clearCache($id = null)
-    {
-        Cache::delete(self::CACHE_KEY_PREFIX_INDEX . '*');
-        if ($id) {
-            Cache::delete(self::CACHE_KEY_PREFIX_SINGLE . $id);
-        }
     }
 }
