@@ -230,6 +230,7 @@ export default {
             last_page: 1
         })
 
+        // Oblicza zakres numerów stron do wyświetlenia w paginacji (maksymalnie 5 stron)
         const displayedPages = computed(() => {
             const maxVisiblePages = 5;
             let startPage = Math.max(1, meta.value.current_page - Math.floor(maxVisiblePages / 2));
