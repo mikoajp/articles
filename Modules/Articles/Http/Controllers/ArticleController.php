@@ -18,8 +18,8 @@ class ArticleController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = $request->input('per_page', 20);
-        $page = $request->input('page', 1);
+        $perPage = max(1, min(100, $request->input('per_page', 20)));
+        $page = max(1, $request->input('page', 1));
 
         $articles = $this->cacheService->getArticles($perPage, $page);
 
@@ -42,8 +42,6 @@ class ArticleController extends Controller
         ]);
 
         $article = Article::create($validated);
-        $this->cacheService->clearCache();
-
         return response()->json($article, 201);
     }
 
@@ -63,10 +61,6 @@ class ArticleController extends Controller
         ]);
 
         $article->update($validated);
-
-        $this->cacheService->clearCache($id);
-        $this->cacheService->putArticle($article->fresh());
-
         return response()->json($article);
     }
 
@@ -74,9 +68,6 @@ class ArticleController extends Controller
     {
         $article = Article::findOrFail($id);
         $article->delete();
-
-        $this->cacheService->clearCache($id);
-
         return response()->json(null, 204);
     }
 }
