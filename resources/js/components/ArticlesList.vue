@@ -1,38 +1,34 @@
 <template>
-    <div class="container mt-4">
+    <div class="container py-5">
         <!-- Nagłówek -->
-        <div class="mb-5">
-            <h1 class="h2 mb-4">Articles</h1>
+        <header class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="fw-bold display-6">Articles</h1>
             <button
                 @click="showCreateForm = true"
-                class="btn btn-primary mb-3"
+                class="btn btn-primary d-flex align-items-center gap-2 shadow-sm"
             >
-                Add New Article
+                <i class="bi bi-plus-circle-fill"></i>
+                <span>Add New Article</span>
             </button>
-        </div>
+        </header>
 
         <!-- Loading indicator -->
-        <div v-if="loading" class="text-center">
-            <div class="spinner-border" role="status">
+        <div v-if="loading" class="d-flex justify-content-center py-5">
+            <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
 
-        <!-- Info o wyświetlanych elementach -->
-        <div v-else class="d-flex justify-content-between align-items-center mb-3">
-            <div class="text-muted">
-                Showing {{ meta.per_page * (meta.current_page - 1) + 1 }}
-                to {{ Math.min(meta.per_page * meta.current_page, meta.total) }}
-                of {{ meta.total }} entries
-            </div>
+        <!-- Informacja o elementach -->
+        <div v-else class="d-flex justify-content-between align-items-center mb-4">
+            <span class="text-secondary">
+                Showing {{ meta.per_page * (meta.current_page - 1) + 1 }} to
+                {{ Math.min(meta.per_page * meta.current_page, meta.total) }} of
+                {{ meta.total }} entries
+            </span>
             <div class="d-flex align-items-center gap-2">
-                <label class="text-muted">Items per page:</label>
-                <select
-                    v-model="meta.per_page"
-                    class="form-select form-select-sm"
-                    style="width: auto"
-                    @change="changePerPage"
-                >
+                <label class="text-muted fw-bold">Items per page:</label>
+                <select v-model="meta.per_page" class="form-select form-select-sm w-auto" @change="changePerPage">
                     <option :value="10">10</option>
                     <option :value="20">20</option>
                     <option :value="50">50</option>
@@ -42,111 +38,57 @@
         </div>
 
         <!-- Lista artykułów -->
-        <div v-if="!loading" class="row g-4">
-            <div v-for="article in articles"
-                 :key="article.id"
-                 class="col-12 card shadow-sm"
-            >
-                <div class="card-body">
-                    <h2 class="card-title h5">{{ article.title }}</h2>
-                    <p class="card-text text-muted">{{ article.content }}</p>
-                    <small class="text-muted d-block mb-2">Created: {{ formatDate(article.created_at) }}</small>
-                    <div class="mt-3 d-flex gap-2">
+        <div class="row gy-4">
+            <div v-for="article in articles" :key="article.id" class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-3 h-100 d-flex flex-column">
+                    <div class="card-body d-flex flex-column flex-grow-1">
+                        <h2 class="h5 card-title mb-3 text-primary fw-bold">{{ article.title }}</h2>
+                        <p class="card-text text-muted flex-grow-1">{{ article.content }}</p>
+                        <small class="text-muted">Created: {{ formatDate(article.created_at) }}</small>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end gap-2">
                         <button
                             @click="editArticle(article)"
-                            class="btn btn-warning btn-sm"
+                            class="btn btn-sm btn-outline-secondary"
+                            title="Edit"
                         >
-                            Edit
+                            <i class="bi bi-pencil"></i>
                         </button>
                         <button
                             @click="deleteArticle(article.id)"
-                            class="btn btn-danger btn-sm"
+                            class="btn btn-sm btn-outline-danger"
+                            title="Delete"
                         >
-                            Delete
+                            <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- No articles message -->
+            <!-- Wiadomość o braku artykułów -->
             <div v-if="articles.length === 0" class="col-12 text-center">
-                <p class="text-muted">No articles found</p>
+                <p class="fs-5 text-muted">No articles found</p>
             </div>
         </div>
 
         <!-- Paginacja -->
-        <div v-if="!loading" class="d-flex justify-content-center mt-4">
-            <nav v-if="meta.last_page > 1">
-                <ul class="pagination">
-                    <!-- Previous -->
-                    <li class="page-item" :class="{ disabled: meta.current_page === 1 }">
-                        <a class="page-link" href="#" @click.prevent="loadPage(meta.current_page - 1)">
-                            Previous
-                        </a>
-                    </li>
-
-                    <!-- First page -->
-                    <li v-if="startPage > 1" class="page-item">
-                        <a class="page-link" href="#" @click.prevent="loadPage(1)">1</a>
-                    </li>
-
-                    <!-- Ellipsis -->
-                    <li v-if="startPage > 2" class="page-item disabled">
-                        <span class="page-link">...</span>
-                    </li>
-
-                    <!-- Page numbers -->
-                    <li v-for="page in displayedPages"
-                        :key="page"
-                        class="page-item"
-                        :class="{ active: page === meta.current_page }"
-                    >
-                        <a class="page-link"
-                           href="#"
-                           @click.prevent="loadPage(page)"
-                        >
-                            {{ page }}
-                        </a>
-                    </li>
-
-                    <!-- Ellipsis -->
-                    <li v-if="endPage < meta.last_page - 1" class="page-item disabled">
-                        <span class="page-link">...</span>
-                    </li>
-
-                    <!-- Last page -->
-                    <li v-if="endPage < meta.last_page" class="page-item">
-                        <a class="page-link"
-                           href="#"
-                           @click.prevent="loadPage(meta.last_page)"
-                        >
-                            {{ meta.last_page }}
-                        </a>
-                    </li>
-
-                    <!-- Next -->
-                    <li class="page-item"
-                        :class="{ disabled: meta.current_page === meta.last_page }"
-                    >
-                        <a class="page-link"
-                           href="#"
-                           @click.prevent="loadPage(meta.current_page + 1)"
-                        >
-                            Next
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
+        <nav v-if="!loading && meta.last_page > 1" class="d-flex justify-content-center mt-5">
+            <ul class="pagination">
+                <li class="page-item" :class="{ disabled: meta.current_page === 1 }">
+                    <a class="page-link" href="#" @click.prevent="loadPage(meta.current_page - 1)">Previous</a>
+                </li>
+                <li v-for="page in displayedPages" :key="page" class="page-item" :class="{ active: page === meta.current_page }">
+                    <a class="page-link" href="#" @click.prevent="loadPage(page)">{{ page }}</a>
+                </li>
+                <li class="page-item" :class="{ disabled: meta.current_page === meta.last_page }">
+                    <a class="page-link" href="#" @click.prevent="loadPage(meta.current_page + 1)">Next</a>
+                </li>
+            </ul>
+        </nav>
 
         <!-- Modal formularza -->
-        <div v-if="showCreateForm || editingArticle"
-             class="modal fade show d-block"
-             tabindex="-1"
-             role="dialog"
-             style="background-color: rgba(0,0,0,0.5)"
-        >
-            <div class="modal-dialog" role="document">
+        <div v-if="showCreateForm || editingArticle" class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0, 0, 0, 0.5)">
+            <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
@@ -163,10 +105,8 @@
                                     class="form-control"
                                     :class="{ 'is-invalid': errors.title }"
                                     required
-                                >
-                                <div v-if="errors.title" class="invalid-feedback">
-                                    {{ errors.title[0] }}
-                                </div>
+                                />
+                                <div v-if="errors.title" class="invalid-feedback">{{ errors.title[0] }}</div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Content</label>
@@ -177,24 +117,11 @@
                                     rows="4"
                                     required
                                 ></textarea>
-                                <div v-if="errors.content" class="invalid-feedback">
-                                    {{ errors.content[0] }}
-                                </div>
+                                <div v-if="errors.content" class="invalid-feedback">{{ errors.content[0] }}</div>
                             </div>
                             <div class="d-flex justify-content-end gap-2">
-                                <button
-                                    type="button"
-                                    @click="closeForm"
-                                    class="btn btn-secondary"
-                                    :disabled="formLoading"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    class="btn btn-primary"
-                                    :disabled="formLoading"
-                                >
+                                <button type="button" @click="closeForm" class="btn btn-secondary" :disabled="formLoading">Cancel</button>
+                                <button type="submit" class="btn btn-primary" :disabled="formLoading">
                                     <span v-if="formLoading" class="spinner-border spinner-border-sm me-1"></span>
                                     {{ editingArticle ? 'Update' : 'Create' }}
                                 </button>
@@ -206,6 +133,8 @@
         </div>
     </div>
 </template>
+
+
 
 <script>
 import { ref, computed, onMounted } from 'vue'
