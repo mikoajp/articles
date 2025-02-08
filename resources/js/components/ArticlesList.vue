@@ -35,7 +35,7 @@
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <h2 class="h4 card-title mb-0 text-dark">{{ article.title }}</h2>
-                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3">Article</span>
+                            <span class="badge bg-primary-subtle rounded-pill px-3">Article</span>
                         </div>
                         <p class="card-text text-secondary mb-4">{{ article.content }}</p>
                         <div class="d-flex justify-content-between align-items-center">
@@ -98,11 +98,11 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title fw-bold">
+                        <h5 class="modal-title fw-bold mb-3">
                             {{ editingArticle ? 'Edit Article' : 'Create New Article' }}
                         </h5>
                         <button type="button"
-                                class="btn-close"
+                                class="btn-close mb-2"
                                 @click="closeForm"
                                 aria-label="Close">
                         </button>
@@ -332,6 +332,154 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
+/* Gradient background for modern look */
+.container {
+    min-height: 100vh;
+}
 
+/* Header styling */
+.display-5 {
+    letter-spacing: -0.05em;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Card styling */
+.card {
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+
+/* Badge styling */
+.badge {
+    color: white;
+    font-size: 0.8em;
+    padding: 0.5em 1em;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Button enhancements */
+.btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-outline-warning:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.btn-outline-danger:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+/* Modal styling */
+.modal-content {
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+}
+
+.modal-title {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* Form input styling */
+.form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Animations */
+.article-list-enter-active,
+.article-list-leave-active {
+    transition: all 0.4s ease;
+}
+
+.article-list-enter-from,
+.article-list-leave-to {
+    opacity: 0;
+    transform: translateX(30px);
+}
+
+.fade-from-left {
+    animation: fadeFromLeft 0.6s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Loading spinner customization */
+.spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-width: 0.2em;
+}
+
+/* Empty state styling */
+.bi-journal-text {
+    opacity: 0.8;
+    font-size: 4rem;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Hover effects */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
 </style>
