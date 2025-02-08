@@ -8,29 +8,24 @@ use Modules\Articles\Entities\Article;
 
 class ArticleCacheService
 {
+    public function __construct(
+        private ArticleService $articleService
+    ) {}
     private const CACHE_TTL = 60;
     private const CACHE_KEY_PREFIX = 'articles:list:';
     private const CACHE_KEY_PREFIX_SINGLE = 'article:';
     private const CACHE_INDEX_VERSION_KEY = 'articles:index_version';
 
-    public function getArticles(int $page, int $perPage)
+    public function getArticles(int $page, int $perPage): array
     {
-        $cacheKey = $this->buildCacheKey($page, $perPage);
+        $perPage = max(1, min(100, $perPage));
+        $page = max(1, $page);
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($perPage, $page) {
-            $articles = Article::orderByDesc('created_at')
-                ->paginate($perPage, ['*'], 'page', $page);
-
-            return [
-                'data' => $articles->items(),
-                'meta' => [
-                    'current_page' => $articles->currentPage(),
-                    'per_page' => $articles->perPage(),
-                    'total' => $articles->total(),
-                    'has_more' => $articles->hasMorePages()
-                ]
-            ];
-        });
+        return Cache::remember(
+            $this->getIndexKey($page, $perPage),
+            self::CACHE_TTL,
+            fn() => $this->articleService->getPaginatedArticles($page, $perPage)
+        );
     }
 
     public function getArticle(int $id)
@@ -79,7 +74,7 @@ class ArticleCacheService
         return self::CACHE_KEY_PREFIX_SINGLE . $id;
     }
 
-    private function buildCacheKey(int $page, int $perPage): string
+    private function getIndexKey(int $page, int $perPage): string
     {
         return self::CACHE_KEY_PREFIX . "page_{$page}_per_{$perPage}";
     }

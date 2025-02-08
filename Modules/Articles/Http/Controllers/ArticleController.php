@@ -4,17 +4,15 @@ namespace Modules\Articles\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Modules\Articles\Entities\Article;
+use Modules\Articles\Services\ArticleService;
 use Modules\Articles\Services\ArticleCacheService;
 
 class ArticleController extends Controller
 {
-    private $cacheService;
-
-    public function __construct(ArticleCacheService $cacheService)
-    {
-        $this->cacheService = $cacheService;
-    }
+    public function __construct(
+        private ArticleCacheService $cacheService,
+        private ArticleService $articleService
+    ) {}
 
     public function index(Request $request)
     {
@@ -33,33 +31,31 @@ class ArticleController extends Controller
             'content' => 'required|string'
         ]);
 
-        $article = Article::create($validated);
+        $article = $this->articleService->createArticle($validated);
         return response()->json($article, 201);
     }
 
     public function show($id)
     {
-        $article = $this->cacheService->getArticle($id);
-        return response()->json($article);
+        return response()->json(
+            $this->cacheService->getArticle($id)
+        );
     }
 
     public function update(Request $request, $id)
     {
-        $article = Article::findOrFail($id);
-
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string'
         ]);
 
-        $article->update($validated);
+        $article = $this->articleService->updateArticle($id, $validated);
         return response()->json($article);
     }
 
     public function destroy($id)
     {
-        $article = Article::findOrFail($id);
-        $article->delete();
+        $this->articleService->deleteArticle($id);
         return response()->json(null, 204);
     }
 }

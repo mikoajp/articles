@@ -1,102 +1,133 @@
 <template>
-    <div class="container mt-4">
-        <!-- Nagłówek -->
-        <div class="mb-5">
-            <h1 class="h2 mb-4">Articles</h1>
-            <button
-                @click="showCreateForm = true"
-                class="btn btn-primary mb-3"
-            >
-                Add New Article
-            </button>
+    <div class="container py-5">
+        <div class="row mb-5 align-items-center">
+            <div class="col">
+                <h1 class="display-5 fw-bold text-primary mb-0">Articles</h1>
+            </div>
+            <div class="col-auto">
+                <button
+                    @click="showCreateForm = true"
+                    class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2"
+                >
+                    <i class="bi bi-plus-circle"></i>
+                    Add New Article
+                </button>
+            </div>
         </div>
 
-        <!-- Loading indicator - początkowe ładowanie -->
-        <div v-if="loading && !articles.length" class="text-center">
-            <div class="spinner-border" role="status">
+        <div v-if="loading && !articles.length" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
 
-        <!-- Lista artykułów -->
-        <div class="row g-4">
-            <div v-for="article in articles"
+        <TransitionGroup
+            name="article-list"
+            tag="div"
+            class="row g-4"
+        >
+            <div v-for="(article, index) in articles"
                  :key="article.id"
-                 class="col-12 card shadow-sm"
+                 class="col-12 article-item fade-from-left"
+                 :style="{ '--delay': `${index * 0.1}s` }"
             >
-                <div class="card-body">
-                    <h2 class="card-title h5">{{ article.title }}</h2>
-                    <p class="card-text text-muted">{{ article.content }}</p>
-                    <small class="text-muted d-block mb-2">Created: {{ formatDate(article.created_at) }}</small>
-                    <div class="mt-3 d-flex gap-2">
-                        <button
-                            @click="editArticle(article)"
-                            class="btn btn-warning btn-sm"
-                        >
-                            Edit
-                        </button>
-                        <button
-                            @click="deleteArticle(article.id)"
-                            class="btn btn-danger btn-sm"
-                        >
-                            Delete
-                        </button>
+                <div class="card border-0 shadow-sm hover-shadow transition-all">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h2 class="h4 card-title mb-0 text-dark">{{ article.title }}</h2>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3">Article</span>
+                        </div>
+                        <p class="card-text text-secondary mb-4">{{ article.content }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar3"></i>
+                                {{ formatDate(article.created_at) }}
+                            </small>
+                            <div class="btn-group">
+                                <button
+                                    @click="editArticle(article)"
+                                    class="btn btn-outline-warning rounded-pill px-3 me-2 d-flex align-items-center gap-2"
+                                >
+                                    <i class="bi bi-pencil"></i>
+                                    Edit
+                                </button>
+                                <button
+                                    @click="deleteArticle(article.id)"
+                                    class="btn btn-outline-danger rounded-pill px-3 d-flex align-items-center gap-2"
+                                >
+                                    <i class="bi bi-trash"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Loading więcej danych -->
-            <div v-if="loadingMore" class="col-12 text-center py-4">
+            <div v-if="loadingMore"
+                 :key="'loading-more'"
+                 class="col-12 text-center py-4 fade-in">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading more...</span>
                 </div>
             </div>
 
-            <!-- Brak artykułów -->
-            <div v-if="articles.length === 0 && !loading" class="col-12 text-center">
-                <p class="text-muted">No articles found</p>
+            <div v-if="articles.length === 0 && !loading"
+                 :key="'empty-state'"
+                 class="col-12 fade-in">
+                <div class="text-center py-5 bg-light rounded-3">
+                    <i class="bi bi-journal-text display-1 text-secondary mb-3 d-block"></i>
+                    <h3 class="text-secondary">No articles found</h3>
+                    <p class="text-muted">Start by adding your first article</p>
+                </div>
             </div>
 
-            <!-- Koniec listy -->
-            <div v-if="!hasMore && articles.length > 0" class="col-12 text-center py-4">
-                <p class="text-muted">No more articles to load</p>
+            <div v-if="!hasMore && articles.length > 0"
+                 :key="'end-of-list'"
+                 class="col-12 text-center py-4 fade-in">
+                <p class="text-muted mb-0">No more articles to load</p>
             </div>
-        </div>
+        </TransitionGroup>
 
-        <!-- Modal formularza -->
         <div v-if="showCreateForm || editingArticle"
              class="modal fade show d-block"
              tabindex="-1"
              role="dialog"
              style="background-color: rgba(0, 0, 0, 0.5)"
         >
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">
                             {{ editingArticle ? 'Edit Article' : 'Create New Article' }}
                         </h5>
-                        <button type="button" class="btn-close" @click="closeForm"></button>
+                        <button type="button"
+                                class="btn-close"
+                                @click="closeForm"
+                                aria-label="Close">
+                        </button>
                     </div>
                     <div class="modal-body">
                         <form @submit.prevent="submitForm">
-                            <div class="mb-3">
-                                <label class="form-label">Title</label>
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Title</label>
                                 <input
                                     v-model="form.title"
-                                    class="form-control"
+                                    class="form-control form-control-lg"
                                     :class="{ 'is-invalid': errors.title }"
+                                    placeholder="Enter article title"
                                     required
                                 />
                                 <div v-if="errors.title" class="invalid-feedback">{{ errors.title[0] }}</div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Content</label>
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Content</label>
                                 <textarea
                                     v-model="form.content"
                                     class="form-control"
                                     :class="{ 'is-invalid': errors.content }"
-                                    rows="4"
+                                    rows="6"
+                                    placeholder="Write your article content here..."
                                     required
                                 ></textarea>
                                 <div v-if="errors.content" class="invalid-feedback">{{ errors.content[0] }}</div>
@@ -105,17 +136,18 @@
                                 <button
                                     type="button"
                                     @click="closeForm"
-                                    class="btn btn-secondary"
+                                    class="btn btn-light rounded-pill px-4"
                                     :disabled="formLoading"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    class="btn btn-primary"
+                                    class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2"
                                     :disabled="formLoading"
                                 >
-                                    <span v-if="formLoading" class="spinner-border spinner-border-sm me-1"></span>
+                                    <span v-if="formLoading" class="spinner-border spinner-border-sm"></span>
+                                    <i v-else class="bi" :class="editingArticle ? 'bi-check2-circle' : 'bi-plus-circle'"></i>
                                     {{ editingArticle ? 'Update' : 'Create' }}
                                 </button>
                             </div>
@@ -148,37 +180,34 @@ export default {
             content: ''
         })
 
-        const perPage = 15
+        const initialLoadCount = 5
+        const perPage = 1
         const scrollDebounce = 200
         const scrollThreshold = 200
+        let initialLoadCompleted = false
 
-        // Metody
         const loadArticles = async () => {
             if (!hasMore.value || loadingMore.value) return
-
-            const controller = new AbortController()
 
             try {
                 loadingMore.value = true
                 const response = await axios.get('/api/articles', {
                     params: {
                         page: currentPage.value,
-                        per_page: perPage
-                    },
-                    signal: controller.signal
+                        per_page: initialLoadCompleted ? perPage : initialLoadCount
+                    }
                 })
 
-                if (response.data.data.length === 0) {
+                const newArticles = response.data.data
+
+                if (newArticles.length === 0) {
                     hasMore.value = false
                     return
                 }
 
-                articles.value = [...articles.value, ...response.data.data]
+                articles.value.push(...newArticles)
                 currentPage.value++
-
-                if (shouldLoadMore()) {
-                    loadArticles()
-                }
+                if (!initialLoadCompleted) initialLoadCompleted = true
             } catch (error) {
                 if (!axios.isCancel(error)) {
                     console.error('Error loading articles:', error)
@@ -303,17 +332,6 @@ export default {
 }
 </script>
 
-<style scoped>
-.modal.fade.show {
-    background-color: rgba(0,0,0,0.5);
-}
+<style>
 
-.card {
-    transition: transform 0.2s;
-    min-height: 150px;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-}
 </style>
