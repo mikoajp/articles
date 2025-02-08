@@ -18,20 +18,12 @@ class ArticleController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = max(1, min(100, $request->input('per_page', 20)));
+        $perPage = max(1, min(100, $request->input('per_page', 15)));
         $page = max(1, $request->input('page', 1));
 
-        $articles = $this->cacheService->getArticles($perPage, $page);
-
-        return response()->json([
-            'data' => $articles->items(),
-            'meta' => [
-                'current_page' => $articles->currentPage(),
-                'per_page' => $articles->perPage(),
-                'total' => $articles->total(),
-                'last_page' => $articles->lastPage(),
-            ]
-        ]);
+        return response()->json(
+            $this->cacheService->getArticles($page, $perPage)
+        );
     }
 
     public function store(Request $request)

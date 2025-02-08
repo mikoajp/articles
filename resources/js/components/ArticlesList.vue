@@ -1,93 +1,75 @@
 <template>
-    <div class="container py-5">
+    <div class="container mt-4">
         <!-- Nagłówek -->
-        <header class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="fw-bold display-6">Articles</h1>
+        <div class="mb-5">
+            <h1 class="h2 mb-4">Articles</h1>
             <button
                 @click="showCreateForm = true"
-                class="btn btn-primary d-flex align-items-center gap-2 shadow-sm"
+                class="btn btn-primary mb-3"
             >
-                <i class="bi bi-plus-circle-fill"></i>
-                <span>Add New Article</span>
+                Add New Article
             </button>
-        </header>
+        </div>
 
-        <!-- Loading indicator -->
-        <div v-if="loading" class="d-flex justify-content-center py-5">
-            <div class="spinner-border text-primary" role="status">
+        <!-- Loading indicator - początkowe ładowanie -->
+        <div v-if="loading && !articles.length" class="text-center">
+            <div class="spinner-border" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
 
-        <!-- Informacja o elementach -->
-        <div v-else class="d-flex justify-content-between align-items-center mb-4">
-            <span class="text-secondary">
-                Showing {{ meta.per_page * (meta.current_page - 1) + 1 }} to
-                {{ Math.min(meta.per_page * meta.current_page, meta.total) }} of
-                {{ meta.total }} entries
-            </span>
-            <div class="d-flex align-items-center gap-2">
-                <label class="text-muted fw-bold">Items per page:</label>
-                <select v-model="meta.per_page" class="form-select form-select-sm w-auto" @change="changePerPage">
-                    <option :value="10">10</option>
-                    <option :value="20">20</option>
-                    <option :value="50">50</option>
-                    <option :value="100">100</option>
-                </select>
-            </div>
-        </div>
-
         <!-- Lista artykułów -->
-        <div class="row gy-4">
-            <div v-for="article in articles" :key="article.id" class="col-md-6 col-lg-4">
-                <div class="card border-0 shadow-sm rounded-3 h-100 d-flex flex-column">
-                    <div class="card-body d-flex flex-column flex-grow-1">
-                        <h2 class="h5 card-title mb-3 text-primary fw-bold">{{ article.title }}</h2>
-                        <p class="card-text text-muted flex-grow-1">{{ article.content }}</p>
-                        <small class="text-muted">Created: {{ formatDate(article.created_at) }}</small>
-                    </div>
-                    <div class="card-footer d-flex justify-content-end gap-2">
+        <div class="row g-4">
+            <div v-for="article in articles"
+                 :key="article.id"
+                 class="col-12 card shadow-sm"
+            >
+                <div class="card-body">
+                    <h2 class="card-title h5">{{ article.title }}</h2>
+                    <p class="card-text text-muted">{{ article.content }}</p>
+                    <small class="text-muted d-block mb-2">Created: {{ formatDate(article.created_at) }}</small>
+                    <div class="mt-3 d-flex gap-2">
                         <button
                             @click="editArticle(article)"
-                            class="btn btn-sm btn-outline-secondary"
-                            title="Edit"
+                            class="btn btn-warning btn-sm"
                         >
-                            <i class="bi bi-pencil"></i>
+                            Edit
                         </button>
                         <button
                             @click="deleteArticle(article.id)"
-                            class="btn btn-sm btn-outline-danger"
-                            title="Delete"
+                            class="btn btn-danger btn-sm"
                         >
-                            <i class="bi bi-trash"></i>
+                            Delete
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Wiadomość o braku artykułów -->
-            <div v-if="articles.length === 0" class="col-12 text-center">
-                <p class="fs-5 text-muted">No articles found</p>
+            <!-- Loading więcej danych -->
+            <div v-if="loadingMore" class="col-12 text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading more...</span>
+                </div>
+            </div>
+
+            <!-- Brak artykułów -->
+            <div v-if="articles.length === 0 && !loading" class="col-12 text-center">
+                <p class="text-muted">No articles found</p>
+            </div>
+
+            <!-- Koniec listy -->
+            <div v-if="!hasMore && articles.length > 0" class="col-12 text-center py-4">
+                <p class="text-muted">No more articles to load</p>
             </div>
         </div>
 
-        <!-- Paginacja -->
-        <nav v-if="!loading && meta.last_page > 1" class="d-flex justify-content-center mt-5">
-            <ul class="pagination">
-                <li class="page-item" :class="{ disabled: meta.current_page === 1 }">
-                    <a class="page-link" href="#" @click.prevent="loadPage(meta.current_page - 1)">Previous</a>
-                </li>
-                <li v-for="page in displayedPages" :key="page" class="page-item" :class="{ active: page === meta.current_page }">
-                    <a class="page-link" href="#" @click.prevent="loadPage(page)">{{ page }}</a>
-                </li>
-                <li class="page-item" :class="{ disabled: meta.current_page === meta.last_page }">
-                    <a class="page-link" href="#" @click.prevent="loadPage(meta.current_page + 1)">Next</a>
-                </li>
-            </ul>
-        </nav>
-
         <!-- Modal formularza -->
-        <div v-if="showCreateForm || editingArticle" class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0, 0, 0, 0.5)">
+        <div v-if="showCreateForm || editingArticle"
+             class="modal fade show d-block"
+             tabindex="-1"
+             role="dialog"
+             style="background-color: rgba(0, 0, 0, 0.5)"
+        >
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -120,8 +102,19 @@
                                 <div v-if="errors.content" class="invalid-feedback">{{ errors.content[0] }}</div>
                             </div>
                             <div class="d-flex justify-content-end gap-2">
-                                <button type="button" @click="closeForm" class="btn btn-secondary" :disabled="formLoading">Cancel</button>
-                                <button type="submit" class="btn btn-primary" :disabled="formLoading">
+                                <button
+                                    type="button"
+                                    @click="closeForm"
+                                    class="btn btn-secondary"
+                                    :disabled="formLoading"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary"
+                                    :disabled="formLoading"
+                                >
                                     <span v-if="formLoading" class="spinner-border spinner-border-sm me-1"></span>
                                     {{ editingArticle ? 'Update' : 'Create' }}
                                 </button>
@@ -134,85 +127,79 @@
     </div>
 </template>
 
-
-
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
+import { debounce } from 'lodash-es'
 
 export default {
     setup() {
         const articles = ref([])
         const loading = ref(true)
+        const loadingMore = ref(false)
+        const currentPage = ref(1)
+        const hasMore = ref(true)
+        const errors = ref({})
         const formLoading = ref(false)
         const showCreateForm = ref(false)
         const editingArticle = ref(null)
-        const errors = ref({})
         const form = ref({
             title: '',
             content: ''
         })
-        const meta = ref({
-            current_page: 1,
-            per_page: 20,
-            total: 0,
-            last_page: 1
-        })
 
-        // Oblicza zakres numerów stron do wyświetlenia w paginacji (maksymalnie 5 stron)
-        const displayedPages = computed(() => {
-            const maxVisiblePages = 5;
-            let startPage = Math.max(1, meta.value.current_page - Math.floor(maxVisiblePages / 2));
-            let endPage = Math.min(meta.value.last_page, startPage + maxVisiblePages - 1);
+        const perPage = 15
+        const scrollDebounce = 200
+        const scrollThreshold = 200
 
-            if (endPage - startPage + 1 < maxVisiblePages) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-            }
+        // Metody
+        const loadArticles = async () => {
+            if (!hasMore.value || loadingMore.value) return
 
-            const pages = [];
-            for (let i = startPage; i <= endPage; i++) {
-                pages.push(i);
-            }
-            return pages;
-        });
+            const controller = new AbortController()
 
-        const startPage = computed(() => {
-            return displayedPages.value[0];
-        });
-
-        const endPage = computed(() => {
-            return displayedPages.value[displayedPages.value.length - 1];
-        });
-
-        const loadArticles = async (page = 1) => {
-            loading.value = true
             try {
+                loadingMore.value = true
                 const response = await axios.get('/api/articles', {
                     params: {
-                        page,
-                        per_page: meta.value.per_page
-                    }
+                        page: currentPage.value,
+                        per_page: perPage
+                    },
+                    signal: controller.signal
                 })
-                articles.value = response.data.data
-                meta.value = response.data.meta
+
+                if (response.data.data.length === 0) {
+                    hasMore.value = false
+                    return
+                }
+
+                articles.value = [...articles.value, ...response.data.data]
+                currentPage.value++
+
+                if (shouldLoadMore()) {
+                    loadArticles()
+                }
             } catch (error) {
-                console.error('Error loading articles:', error)
-                alert('Error loading articles. Please try again later.')
+                if (!axios.isCancel(error)) {
+                    console.error('Error loading articles:', error)
+                }
             } finally {
                 loading.value = false
+                loadingMore.value = false
             }
         }
 
-        const loadPage = (page) => {
-            if (page > 0 && page <= meta.value.last_page) {
-                loadArticles(page)
-            }
+        const shouldLoadMore = () => {
+            const { scrollY, innerHeight } = window
+            const { scrollHeight } = document.documentElement
+            return scrollY + innerHeight >= scrollHeight - scrollThreshold
         }
 
-        const changePerPage = () => {
-            meta.value.current_page = 1;
-            loadArticles();
-        };
+        const handleScroll = debounce(() => {
+            if (!loadingMore.value && hasMore.value && shouldLoadMore()) {
+                loadArticles()
+            }
+        }, scrollDebounce)
 
         const submitForm = async () => {
             formLoading.value = true
@@ -222,14 +209,13 @@ export default {
                 let response
                 if (editingArticle.value) {
                     response = await axios.put(`/api/articles/${editingArticle.value.id}`, form.value)
-                    const index = articles.value.findIndex(a => a.id === editingArticle.value.id);
+                    const index = articles.value.findIndex(a => a.id === editingArticle.value.id)
                     if (index !== -1) {
-                        articles.value[index] = response.data;
+                        articles.value[index] = response.data
                     }
                 } else {
                     response = await axios.post('/api/articles', form.value)
-                    articles.value.unshift(response.data);
-                    meta.value.total++;
+                    articles.value.unshift(response.data)
                 }
                 closeForm()
             } catch (error) {
@@ -238,7 +224,6 @@ export default {
                 } else {
                     alert('Error saving article. Please try again later.')
                 }
-                console.error('Error submitting form:', error)
             } finally {
                 formLoading.value = false
             }
@@ -250,22 +235,22 @@ export default {
                 title: article.title,
                 content: article.content
             }
+            showCreateForm.value = true
         }
 
         const deleteArticle = async (id) => {
-            if (confirm('Are you sure you want to delete this article?')) {
-                try {
-                    await axios.delete(`/api/articles/${id}`)
-                    articles.value = articles.value.filter(a => a.id !== id);
-                    meta.value.total--;
+            if (!confirm('Are you sure you want to delete this article?')) return
 
-                    if (articles.value.length === 0 && meta.value.current_page > 1) {
-                        loadPage(meta.value.current_page - 1);
-                    }
-                } catch (error) {
-                    console.error('Error deleting article:', error)
-                    alert('Error deleting article. Please try again later.')
+            try {
+                await axios.delete(`/api/articles/${id}`)
+                articles.value = articles.value.filter(a => a.id !== id)
+
+                if (articles.value.length === 0 && hasMore.value) {
+                    loadArticles()
                 }
+            } catch (error) {
+                console.error('Error deleting article:', error)
+                alert('Error deleting article. Please try again later.')
             }
         }
 
@@ -289,27 +274,30 @@ export default {
             })
         }
 
-        onMounted(loadArticles)
+        onMounted(() => {
+            loadArticles()
+            window.addEventListener('scroll', handleScroll)
+        })
+
+        onUnmounted(() => {
+            window.removeEventListener('scroll', handleScroll)
+        })
 
         return {
             articles,
             loading,
+            loadingMore,
+            hasMore,
             formLoading,
+            errors,
             showCreateForm,
             editingArticle,
             form,
-            errors,
-            meta,
-            displayedPages,
-            startPage,
-            endPage,
             submitForm,
             editArticle,
             deleteArticle,
             closeForm,
-            loadPage,
             formatDate,
-            changePerPage
         }
     }
 }
@@ -319,9 +307,12 @@ export default {
 .modal.fade.show {
     background-color: rgba(0,0,0,0.5);
 }
+
 .card {
     transition: transform 0.2s;
+    min-height: 150px;
 }
+
 .card:hover {
     transform: translateY(-2px);
 }
