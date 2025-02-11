@@ -1,158 +1,205 @@
 <template>
-    <div class="container py-5">
-        <div class="row mb-5 align-items-center">
-            <div class="col">
-                <h1 class="display-5 fw-bold text-primary mb-0">Articles</h1>
+    <div class="container py-4">
+        <!-- Nagłówek -->
+        <header class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-5">
+            <div>
+                <h1 class="display-4 fw-bold text-gradient-primary mb-2">Knowledge Base</h1>
+                <p class="lead text-muted">Manage your articles and documentation</p>
             </div>
-            <div class="col-auto">
-                <button
-                    @click="showCreateForm = true"
-                    class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2"
-                >
-                    <i class="bi bi-plus-circle"></i>
-                    Add New Article
-                </button>
-            </div>
-        </div>
+            <button
+                @click="showCreateForm = true"
+                class="btn btn-primary btn-lg rounded-pill px-4 px-md-5 d-flex align-items-center gap-2 shadow-sm"
+            >
+                <i class="bi bi-plus-lg me-1"></i>
+                New Article
+            </button>
+        </header>
 
+        <!-- Stan ładowania -->
         <div v-if="loading && !articles.length" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
+            <div class="spinner-grow text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
 
+        <!-- Lista artykułów -->
         <TransitionGroup
             name="article-list"
             tag="div"
-            class="row g-4"
+            class="row"
         >
-            <div v-for="(article, index) in articles"
-                 :key="article.id"
-                 class="col-12 article-item fade-from-left"
-                 :style="{ '--delay': `${index * 0.1}s` }"
+            <!-- Karty artykułów -->
+            <div
+                v-for="(article, index) in articles"
+                :key="article.id"
+                class="col-12 mb-4"
+                :style="{ '--delay': `${index * 0.1}s` }"
             >
                 <div class="card border-0 shadow-sm hover-shadow transition-all">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h2 class="h4 card-title mb-0 text-dark">{{ article.title }}</h2>
-                            <span class="badge bg-primary-subtle rounded-pill px-3">Article</span>
+                            <h3 class="h5 card-title text-truncate mb-0">{{ article.title }}</h3>
+                            <div class="dropdown">
+                                <button
+                                    class="btn btn-link text-muted p-0"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                >
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button
+                                            @click="editArticle(article)"
+                                            class="dropdown-item d-flex align-items-center gap-2"
+                                        >
+                                            <i class="bi bi-pencil"></i>
+                                            Edit
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button
+                                            @click="deleteArticle(article.id)"
+                                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                            Delete
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
-                        <p class="card-text text-secondary mb-4">{{ article.content }}</p>
-                        <div class="d-flex justify-content-between align-items-center">
+
+                        <p class="card-text text-muted flex-grow-1 line-clamp-3 mb-4">{{ article.content }}</p>
+
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
                             <small class="text-muted d-flex align-items-center gap-2">
-                                <i class="bi bi-calendar3"></i>
+                                <i class="bi bi-clock"></i>
                                 {{ formatDate(article.created_at) }}
                             </small>
-                            <div class="btn-group">
-                                <button
-                                    @click="editArticle(article)"
-                                    class="btn btn-outline-warning rounded-pill px-3 me-2 d-flex align-items-center gap-2"
-                                >
-                                    <i class="bi bi-pencil"></i>
-                                    Edit
-                                </button>
-                                <button
-                                    @click="deleteArticle(article.id)"
-                                    class="btn btn-outline-danger rounded-pill px-3 d-flex align-items-center gap-2"
-                                >
-                                    <i class="bi bi-trash"></i>
-                                    Delete
-                                </button>
-                            </div>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill">
+                                {{ article.category || 'General' }}
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div v-if="loadingMore"
-                 :key="'loading-more'"
-                 class="col-12 text-center py-4 fade-in">
+            <!-- Ładowanie kolejnych elementów -->
+            <div v-if="loadingMore" class="col-12 text-center py-5">
                 <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading more...</span>
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
 
-            <div v-if="articles.length === 0 && !loading"
-                 :key="'empty-state'"
-                 class="col-12 fade-in">
-                <div class="text-center py-5 bg-light rounded-3">
-                    <i class="bi bi-journal-text display-1 text-secondary mb-3 d-block"></i>
-                    <h3 class="text-secondary">No articles found</h3>
-                    <p class="text-muted">Start by adding your first article</p>
+            <!-- Brak artykułów -->
+            <div v-if="articles.length === 0 && !loading" class="col-12">
+                <div class="text-center py-5 bg-light rounded-4">
+                    <i class="bi bi-file-text display-1 text-primary opacity-25 mb-4"></i>
+                    <h2 class="h4 mb-3">No articles found</h2>
+                    <button
+                        @click="showCreateForm = true"
+                        class="btn btn-link text-primary p-0"
+                    >
+                        Create your first article
+                    </button>
                 </div>
-            </div>
-
-            <div v-if="!hasMore && articles.length > 0"
-                 :key="'end-of-list'"
-                 class="col-12 text-center py-4 fade-in">
-                <p class="text-muted mb-0">No more articles to load</p>
             </div>
         </TransitionGroup>
 
-        <div v-if="showCreateForm || editingArticle"
-             class="modal fade show d-block"
-             tabindex="-1"
-             role="dialog"
-             style="background-color: rgba(0, 0, 0, 0.5)"
+        <!-- Przycisk mobilny -->
+        <button
+            @click="showCreateForm = true"
+            class="btn btn-primary btn-lg rounded-circle shadow-lg fixed-bottom d-md-none"
+            style="right: 1rem; bottom: 1rem; width: 56px; height: 56px;"
         >
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow">
-                    <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title fw-bold mb-3">
-                            {{ editingArticle ? 'Edit Article' : 'Create New Article' }}
-                        </h5>
-                        <button type="button"
-                                class="btn-close mb-2"
+            <i class="bi bi-plus-lg"></i>
+        </button>
+
+        <!-- Modal formularza -->
+        <div
+            v-if="showCreateForm || editingArticle"
+            class="modal fade show d-block bg-dark bg-opacity-25"
+            tabindex="-1"
+            @click.self="closeForm"
+        >
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow-lg overflow-hidden">
+                    <div class="modal-header bg-primary text-white">
+                        <h2 class="modal-title fs-5">
+                            {{ editingArticle ? 'Edit Article' : 'New Article' }}
+                        </h2>
+                        <button
+                            type="button"
+                            class="btn-close btn-close-white"
+                            @click="closeForm"
+                        ></button>
+                    </div>
+
+                    <form @submit.prevent="submitForm" class="modal-body">
+                        <div class="mb-4">
+                            <label class="form-label fw-medium mb-2">Title</label>
+                            <input
+                                v-model="form.title"
+                                type="text"
+                                class="form-control form-control-lg"
+                                :class="{ 'is-invalid': errors.title }"
+                                placeholder="Enter article title"
+                                maxlength="120"
+                            >
+                            <div class="d-flex justify-content-between mt-2">
+                                <div v-if="errors.title" class="invalid-feedback">
+                                    {{ errors.title[0] }}
+                                </div>
+                                <small class="text-muted ms-auto">
+                                    {{ form.title.length }}/120
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-medium mb-2">Content</label>
+                            <textarea
+                                v-model="form.content"
+                                class="form-control"
+                                :class="{ 'is-invalid': errors.content }"
+                                rows="8"
+                                placeholder="Write your content here..."
+                                maxlength="5000"
+                            ></textarea>
+                            <div class="d-flex justify-content-between mt-2">
+                                <div v-if="errors.content" class="invalid-feedback">
+                                    {{ errors.content[0] }}
+                                </div>
+                                <small class="text-muted ms-auto">
+                                    {{ form.content.length }}/5000
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-3 pt-4">
+                            <button
+                                type="button"
                                 @click="closeForm"
-                                aria-label="Close">
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form @submit.prevent="submitForm">
-                            <div class="mb-4">
-                                <label class="form-label fw-medium">Title</label>
-                                <input
-                                    v-model="form.title"
-                                    class="form-control form-control-lg"
-                                    :class="{ 'is-invalid': errors.title }"
-                                    placeholder="Enter article title"
-                                    required
-                                />
-                                <div v-if="errors.title" class="invalid-feedback">{{ errors.title[0] }}</div>
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label fw-medium">Content</label>
-                                <textarea
-                                    v-model="form.content"
-                                    class="form-control"
-                                    :class="{ 'is-invalid': errors.content }"
-                                    rows="6"
-                                    placeholder="Write your article content here..."
-                                    required
-                                ></textarea>
-                                <div v-if="errors.content" class="invalid-feedback">{{ errors.content[0] }}</div>
-                            </div>
-                            <div class="d-flex justify-content-end gap-2">
-                                <button
-                                    type="button"
-                                    @click="closeForm"
-                                    class="btn btn-light rounded-pill px-4"
-                                    :disabled="formLoading"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    class="btn btn-primary rounded-pill px-4 d-flex align-items-center gap-2"
-                                    :disabled="formLoading"
-                                >
-                                    <span v-if="formLoading" class="spinner-border spinner-border-sm"></span>
-                                    <i v-else class="bi" :class="editingArticle ? 'bi-check2-circle' : 'bi-plus-circle'"></i>
-                                    {{ editingArticle ? 'Update' : 'Create' }}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                                class="btn btn-link text-muted"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                class="btn btn-primary px-5"
+                                :disabled="formLoading"
+                            >
+                                <template v-if="formLoading">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    Processing...
+                                </template>
+                                <template v-else>
+                                    {{ editingArticle ? 'Save Changes' : 'Publish' }}
+                                </template>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -332,154 +379,3 @@ export default {
 }
 </script>
 
-<style scoped>
-/* Gradient background for modern look */
-.container {
-    min-height: 100vh;
-}
-
-/* Header styling */
-.display-5 {
-    letter-spacing: -0.05em;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* Card styling */
-.card {
-    border-radius: 16px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-}
-
-/* Badge styling */
-.badge {
-    color: white;
-    font-size: 0.8em;
-    padding: 0.5em 1em;
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    border: 1px solid rgba(255,255,255,0.2);
-}
-
-/* Button enhancements */
-.btn-primary {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    border: none;
-    transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.btn-outline-warning:hover {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: white;
-}
-
-.btn-outline-danger:hover {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    color: white;
-}
-
-/* Modal styling */
-.modal-content {
-    border-radius: 20px;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
-}
-
-.modal-header {
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    color: white;
-}
-
-.modal-title {
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-/* Form input styling */
-.form-control {
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-/* Animations */
-.article-list-enter-active,
-.article-list-leave-active {
-    transition: all 0.4s ease;
-}
-
-.article-list-enter-from,
-.article-list-leave-to {
-    opacity: 0;
-    transform: translateX(30px);
-}
-
-.fade-from-left {
-    animation: fadeFromLeft 0.6s ease forwards;
-    opacity: 0;
-}
-
-@keyframes fadeFromLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.fade-in {
-    animation: fadeIn 0.4s ease forwards;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* Loading spinner customization */
-.spinner-border {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-width: 0.2em;
-}
-
-/* Empty state styling */
-.bi-journal-text {
-    opacity: 0.8;
-    font-size: 4rem;
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* Hover effects */
-.btn {
-    transition: all 0.2s ease;
-}
-
-.btn:hover {
-    transform: translateY(-1px);
-}
-</style>
