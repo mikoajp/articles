@@ -1,48 +1,77 @@
-🚀 Szybki start
-📋 Wymagania systemowe
+# 🚀 Articles 
 
-PHP 8.1 lub wyższy
-Node.js & NPM
-Docker & Docker Compose
-Composer
+## 💻 Instalacja
 
-💻 Instalacja
-1. Sklonuj repozytorium
-[bashCopygit clone https://github.com/twoj-projekt/articles-system.git](https://github.com/mikoajp/articles)
+### 1. Sklonuj repozytorium
+```bash
+git clone git@github.com:mikoajp/articles.git
 cd articles
-2. Instalacja zależności backendowych
-composer install
-3. Instalacja zależności frontendowych
-npm install
-5. Konfiguracja środowiska
-Kopiowanie pliku konfiguracyjnego
-cp .env.example .env
+```
 
-# Generowanie klucza aplikacji
+### 2. Instalacja zależności
+#### Backend
+```bash
+composer install
+```
+#### Frontend
+```bash
+npm install
+```
+
+### 3. Konfiguracja środowiska
+
+#### Kopiowanie pliku konfiguracyjnego
+```bash
+cp .env.example .env
+```
+
+#### Generowanie klucza aplikacji
+```bash
 php artisan key:generate
-Skonfiguruj plik .env:
+```
+
+#### Skonfiguruj plik `.env`:
+```ini
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3307
 DB_DATABASE=articles
 DB_USERNAME=articles_user
 DB_PASSWORD=password
-5. Inicjalizacja bazy danych
-Uruchomienie kontenerów Docker
+```
+
+### 4. Inicjalizacja bazy danych
+
+#### Uruchomienie kontenerów Docker
+```bash
 docker-compose up -d
+```
 
-# Czyszczenie cache konfiguracji
+#### Czyszczenie cache konfiguracji
+```bash
 php artisan config:clear
+```
 
-# Migracja i wypełnienie bazy danych
+#### Migracja i wypełnienie bazy danych
+```bash
 php artisan migrate:fresh
 php artisan db:seed
-6. Uruchomienie aplikacji
-Kompilacja assetsów
+```
+
+### 5. Uruchomienie aplikacji
+
+#### Kompilacja assetsów
+```bash
 npm run build
+```
 
-# Uruchomienie środowiska developerskiego
+#### Uruchomienie środowiska developerskiego
+```bash
 npm run dev
+```
 
-# Uruchomienie serwera Laravel
+#### Uruchomienie serwera Laravel
+```bash
 php artisan serve
+```
+
