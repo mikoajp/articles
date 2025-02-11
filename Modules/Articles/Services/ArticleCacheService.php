@@ -4,8 +4,8 @@ namespace Modules\Articles\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Log;
 use Modules\Articles\Entities\Article;
-
 class ArticleCacheService
 {
     public function __construct(
@@ -18,14 +18,18 @@ class ArticleCacheService
 
     public function getArticles(int $page, int $perPage): array
     {
-        $perPage = max(1, min(100, $perPage));
-        $page = max(1, $page);
-
-        return Cache::remember(
-            $this->getIndexKey($page, $perPage),
-            self::CACHE_TTL,
-            fn() => $this->articleService->getPaginatedArticles($page, $perPage)
-        );
+        try {
+            return Cache::remember(
+                $this->getIndexKey($page, $perPage),
+                self::CACHE_TTL,
+                function() use ($page, $perPage) {
+                    return $this->articleService->getPaginatedArticles($page, $perPage);
+                }
+            );
+        } catch (\Exception $e) {
+           Log::error('Cache error: '.$e->getMessage());
+            return $this->articleService->getPaginatedArticles($page, $perPage);
+        }
     }
 
     public function getArticle(int $id)

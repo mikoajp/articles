@@ -17,7 +17,7 @@ services:
             - --max_allowed_packet=128M
             - --wait_timeout=28800
         ports:
-            - "3306:3306"
+            - "3307:3306"
         volumes:
             - ./docker/mysql:/var/lib/mysql
         healthcheck:
