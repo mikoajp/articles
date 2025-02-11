@@ -149,3 +149,34 @@ body {
         display: none;
     }
 }
+.toast-container {
+    z-index: 9999;
+}
+
+.toast {
+    margin-bottom: 1rem;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+.text-bg-success {
+    background-color: #d1e7dd !important;
+    color: #0f5132 !important;
+    border-color: #badbcc !important;
+}
+
+.text-bg-danger {
+    background-color: #f8d7da !important;
+    color: #842029 !important;
+    border-color: #f5c2c7 !important;
+}
+
+.text-bg-warning {
+    background-color: #fff3cd !important;
+    color: #664d03 !important;
+    border-color: #ffecb5 !important;
+}

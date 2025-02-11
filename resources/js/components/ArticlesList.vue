@@ -204,15 +204,54 @@
             </div>
         </div>
     </div>
+    <Toaster :messages="notifications" />
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, provide} from 'vue'
 import axios from 'axios'
 import { debounce } from 'lodash-es'
+import { h } from 'vue'
 
+
+const Toaster = {
+    props: ['messages'],
+    setup(props) {
+        const iconMap = {
+            success: 'bi-check-circle-fill',
+            danger: 'bi-exclamation-circle-fill',
+            warning: 'bi-info-circle-fill'
+        }
+
+        return () => h('div', { class: 'toast-container position-fixed top-0 end-0 p-3' },
+            props.messages.map((msg, index) =>
+                h('div', {
+                    key: index,
+                    class: `toast show align-items-center border-0 text-bg-${msg.type}`,
+                    role: 'alert',
+                    'aria-live': 'assertive',
+                    'aria-atomic': 'true'
+                }, [
+                    h('div', { class: 'd-flex' }, [
+                        h('div', { class: 'toast-body' }, [
+                            h('i', { class: `bi me-2 ${iconMap[msg.type]}` }),
+                            msg.text
+                        ]),
+                        h('button', {
+                            type: 'button',
+                            class: 'btn-close btn-close-white me-2 m-auto',
+                            'data-bs-dismiss': 'toast'
+                        })
+                    ])
+                ])
+            )
+        )
+    }
+}
 export default {
+    components: { Toaster },
     setup() {
+        const notifications = ref([])
         const articles = ref([])
         const loading = ref(true)
         const loadingMore = ref(false)
@@ -226,13 +265,27 @@ export default {
             title: '',
             content: ''
         })
-
         const initialLoadCount = 5
         const perPage = 1
         const scrollDebounce = 200
         const scrollThreshold = 200
         let initialLoadCompleted = false
+        const iconMap = {
+            success: 'bi-check-circle-fill',
+            danger: 'bi-exclamation-circle-fill',
+            warning: 'bi-info-circle-fill'
+        }
 
+
+        const showNotification = (text, type = 'success', duration = 5000) => {
+            const notification = { text, type, id: Date.now() }
+            notifications.value.push(notification)
+
+            setTimeout(() => {
+                notifications.value = notifications.value.filter(n => n.id !== notification.id)
+            }, duration)
+        }
+        provide('toast', showNotification)
         const loadArticles = async () => {
             if (!hasMore.value || loadingMore.value) return
 
@@ -282,6 +335,8 @@ export default {
             errors.value = {}
 
             try {
+                const action = editingArticle.value ? 'updated' : 'created'
+                showNotification(`Article successfully ${action}`, 'success')
                 let response
                 if (editingArticle.value) {
                     response = await axios.put(`/api/articles/${editingArticle.value.id}`, form.value)
@@ -298,7 +353,7 @@ export default {
                 if (error.response?.status === 422) {
                     errors.value = error.response.data.errors
                 } else {
-                    alert('Error saving article. Please try again later.')
+                    showNotification('Failed to save article', 'danger')
                 }
             } finally {
                 formLoading.value = false
@@ -321,6 +376,7 @@ export default {
                 await axios.delete(`/api/articles/${id}`)
                 articles.value = articles.value.filter(a => a.id !== id)
 
+                showNotification('Article deleted successfully', 'warning')
                 if (articles.value.length === 0 && hasMore.value) {
                     loadArticles()
                 }
@@ -374,6 +430,8 @@ export default {
             deleteArticle,
             closeForm,
             formatDate,
+            notifications,
+            showNotification
         }
     }
 }
