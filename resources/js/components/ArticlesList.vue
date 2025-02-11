@@ -370,19 +370,17 @@ export default {
         }
 
         const deleteArticle = async (id) => {
-            if (!confirm('Are you sure you want to delete this article?')) return
 
             try {
                 await axios.delete(`/api/articles/${id}`)
                 articles.value = articles.value.filter(a => a.id !== id)
 
-                showNotification('Article deleted successfully', 'warning')
+                showNotification('Article deleted successfully', 'success')
                 if (articles.value.length === 0 && hasMore.value) {
                     loadArticles()
                 }
             } catch (error) {
-                console.error('Error deleting article:', error)
-                alert('Error deleting article. Please try again later.')
+                showNotification('Error deleting article. Please try again later.', 'danger')
             }
         }
 
