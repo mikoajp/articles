@@ -30,8 +30,8 @@ class ArticleController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string'
         ]);
-
         $article = $this->articleService->createArticle($validated);
+        $this->cacheService->clearCache();
         return response()->json($article, 201);
     }
 
@@ -48,14 +48,16 @@ class ArticleController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string'
         ]);
-
         $article = $this->articleService->updateArticle($id, $validated);
+        $this->cacheService->clearCache($id);
+        $this->cacheService->putArticle($article->fresh());
         return response()->json($article);
     }
 
     public function destroy($id)
     {
         $this->articleService->deleteArticle($id);
+        $this->cacheService->clearCache($id);
         return response()->json(null, 204);
     }
 }
